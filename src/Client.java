@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class Client {
@@ -26,8 +28,9 @@ public class Client {
                 }
             };
 
-            Thread thread = new Thread(runnable);
-            thread.start();
+            //Implement Executor Service
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(runnable);
 
 
             String client;
@@ -37,6 +40,8 @@ public class Client {
                 dataOutputStream.flush();
             }while (!client.equals("end"));
 
+
+            executorService.shutdown();
 
             socket.close();
             dataOutputStream.close();

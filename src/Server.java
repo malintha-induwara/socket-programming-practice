@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     public static void main(String[] args) {
@@ -37,9 +39,8 @@ public class Server {
 
             };
 
-            Thread thread = new Thread(runnable);
-            thread.start();
-
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(runnable);
 
             String serverMassage;
             do {
@@ -49,6 +50,7 @@ public class Server {
             }while (!serverMassage.equals("end"));
 
 
+            executorService.shutdown();
 
             localSocket.close();
             dataOutputStream.close();
