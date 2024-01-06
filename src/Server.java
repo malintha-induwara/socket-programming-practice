@@ -14,34 +14,49 @@ public class Server {
             // Accept the connection and Creating Local Socket
             Socket localSocket = serverSocket.accept();
             System.out.println("Client Request Accepted!");
+            System.out.println();
 
             DataInputStream dataInputStream = new DataInputStream(localSocket.getInputStream());
-
             DataOutputStream dataOutputStream = new DataOutputStream(localSocket.getOutputStream());
+            Scanner input = new Scanner(System.in);
 
 
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+
+            Runnable runnable = ()->{
+                try {
+                    String clientMassage;
+                    do {
+                        clientMassage = dataInputStream.readUTF();
+                        System.out.println("Client: " + clientMassage);
+
+                    }while (!clientMassage.equals("end"));
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            };
+
+            Thread thread = new Thread(runnable);
+            thread.start();
 
 
-            String reply;
-            String message;
-
+            String serverMassage;
             do {
-                reply=bufferedReader.readLine();
-                dataOutputStream.writeUTF(reply);
+                serverMassage=input.nextLine();
+                dataOutputStream.writeUTF(serverMassage);
                 dataOutputStream.flush();
+            }while (!serverMassage.equals("end"));
 
-                message = dataInputStream.readUTF();
-                System.out.println("Client: " + message);
-            }while (!message.equals("end"));
+
 
             localSocket.close();
             dataOutputStream.close();
             dataInputStream.close();
-            bufferedReader.close();
+            input.close();
 
         }catch (IOException e){
-
+           throw new RuntimeException();
         }
     }
 }
