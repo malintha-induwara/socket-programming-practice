@@ -1,64 +1,57 @@
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
 
 public class Server {
-    public static void main(String[] args) {
 
+    private static Server server;
+
+    private ServerSocket serverSocket;
+
+    private ArrayList<ClientHandler> clients = new ArrayList<>();
+
+    private Server() {
         try {
-            // Creating Server socket
-            ServerSocket serverSocket = new ServerSocket(2000);
-            System.out.println("Server started");
-
-            // Accept the connection and Creating Local Socket
-            Socket localSocket = serverSocket.accept();
-            System.out.println("Client Request Accepted!");
-            System.out.println();
-
-            DataInputStream dataInputStream = new DataInputStream(localSocket.getInputStream());
-            DataOutputStream dataOutputStream = new DataOutputStream(localSocket.getOutputStream());
-            Scanner input = new Scanner(System.in);
-
-
-
-            Runnable runnable = ()->{
-                try {
-                    String clientMassage;
-                    do {
-                        clientMassage = dataInputStream.readUTF();
-                        System.out.println("Client: " + clientMassage);
-
-                    }while (!clientMassage.equals("end"));
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-            };
-
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.submit(runnable);
-
-            String serverMassage;
-            do {
-                serverMassage=input.nextLine();
-                dataOutputStream.writeUTF(serverMassage);
-                dataOutputStream.flush();
-            }while (!serverMassage.equals("end"));
-
-
-            executorService.shutdown();
-
-            localSocket.close();
-            dataOutputStream.close();
-            dataInputStream.close();
-            input.close();
-
-        }catch (IOException e){
-           throw new RuntimeException();
+            this.serverSocket = new ServerSocket(3040);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+
+    public static Server getInstance() {
+        return (server == null) ? server = new Server() : server;
+    }
+
+
+    public void startServer() {
+
+        try {
+            while (!serverSocket.isClosed()) {
+                Socket localSocket = serverSocket.accept();
+                ClientHandler client = new ClientHandler(localSocket);
+                Runnable read = () -> {
+                    client.readMsg();
+                };
+                Thread thread = new Thread(read);
+                thread.start();
+                clients.add(client);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void broadcastMassage(String msg, int port) {
+        for (ClientHandler clientHandler : clients) {
+            if (port != clientHandler.getSocket().getPort()) {
+                clientHandler.writeMsg(msg);
+            }
+        }
+    }
+
+
 }
+
